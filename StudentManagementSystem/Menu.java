@@ -149,7 +149,7 @@ public class Menu extends JFrame {
 		btnNewButton_4.setBounds(32, 348, 287, 47);
 		desktopPane.add(btnNewButton_4);
 		
-		JLabel lblNewLabel = new JLabel("What do you want ?");
+		JLabel lblNewLabel = new JLabel("How Can I Help ?");
 		lblNewLabel.setForeground(Color.BLACK);
 		lblNewLabel.setBounds(93, 17, 220, 27);
 		desktopPane_1.add(lblNewLabel);

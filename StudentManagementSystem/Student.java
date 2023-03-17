@@ -4,6 +4,9 @@ import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -97,28 +100,34 @@ public class Student extends JFrame {
 		submit.setForeground(Color.BLACK);
 		submit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
+
 				try {
-					String query = "INSERT INTO `student`(`name`, `entrynumber`, `email`, `contactnumber`, `homecity`) VALUES (?, ?, ?, ?, ?)";
-					con = DriverManager.getConnection("jdbc:mysql://localhost/studentmanagementsystem", "root", "");
-					pst=con.prepareStatement(query);
-					pst.setString(1, sname.getText());
-					pst.setString(2, sentry.getText());
-					pst.setString(3, semail.getText());
-					pst.setString(4, scontact.getText());
-					pst.setString(5, shome.getText());
-					if(sname.getText().equals("") || sentry.getText().equals("") || semail.getText().equals("") || scontact.getText().equals("") || shome.getText().equals("")) {
+					String csvFile = "student.csv";
+					String line;
+
+					String name = sname.getText();
+					String entry = sentry.getText();
+					String email = semail.getText();
+					String contact = scontact.getText();
+					String home = shome.getText();
+
+					if (name.equals("") || entry.equals("") || email.equals("") || contact.equals("") || home.equals("")) {
 						JOptionPane.showMessageDialog(null, "Fill all the details :(");
-					}
-					else {
-						pst.executeUpdate();
+					} else {
+						try (BufferedWriter bw = new BufferedWriter(new FileWriter(csvFile, true))) {
+							line = name + "," + entry + "," + email + "," + contact + "," + home;
+							bw.write(line);
+							bw.newLine();
+						} catch (IOException ee) {
+							JOptionPane.showMessageDialog(null, ee);
+						}
+
 						JOptionPane.showMessageDialog(null, "Student added Successfully :)");
 						dispose();
 						Menu menu = new Menu();
 						menu.show();
 					}
-				}
-				catch(Exception ex) {
+				} catch (Exception ex) {
 					JOptionPane.showMessageDialog(null, ex);
 				}
 				

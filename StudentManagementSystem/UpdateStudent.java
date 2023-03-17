@@ -16,6 +16,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
 import java.awt.event.ActionListener;
+import java.io.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -24,6 +25,8 @@ import java.sql.SQLException;
 import java.awt.event.ActionEvent;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UpdateStudent extends JFrame {
 	
@@ -101,34 +104,73 @@ public class UpdateStudent extends JFrame {
 		JButton updateBtn = new JButton("Update");
 		updateBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
-				
-	
-				
+
+
+
+
 				try {
-					String query = "UPDATE `student` SET name=?, entrynumber=?, email=?, contactnumber=?, homecity=? WHERE entrynumber=?";
-					con = DriverManager.getConnection("jdbc:mysql://localhost/studentmanagementsystem", "root", "");
-					pst=con.prepareStatement(query);
-					
+					String csvFile = "student.csv";
+					String tempFile = "temp_student.csv";
+					String line;
+					String csvSplitBy = ",";
+
 					String pid = updateEntry.getText();
-					pst.setString(1, nameU.getText());
-					pst.setString(2, entryU.getText());
-					pst.setString(3, emailU.getText());
-					pst.setString(4, contactU.getText());
-					pst.setString(5, homeU.getText());
-					pst.setString(6, pid);
-					if(nameU.getText().equals("") || entryU.getText().equals("") || emailU.getText().equals("") || contactU.getText().equals("") || homeU.getText().equals("")) {
-						JOptionPane.showMessageDialog(null, "Fill all the details :(");
+					boolean found = false;
+
+					List<String[]> studentData = new ArrayList<>();
+
+					try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+						while ((line = br.readLine()) != null) {
+							String[] student = line.split(csvSplitBy);
+
+							if (student[1].equalsIgnoreCase(pid)) {
+								found = true;
+								if (!nameU.getText().equals("")) {
+									student[0] = nameU.getText();
+								}
+								if (!entryU.getText().equals("")) {
+									student[1] = entryU.getText();
+								}
+								if (!emailU.getText().equals("")) {
+									student[2] = emailU.getText();
+								}
+								if (!contactU.getText().equals("")) {
+									student[3] = contactU.getText();
+								}
+								if (!homeU.getText().equals("")) {
+									student[4] = homeU.getText();
+								}
+							}
+							studentData.add(student);
+						}
+					} catch (IOException ee) {
+						JOptionPane.showMessageDialog(null, ee);
 					}
-					else {
-						pst.executeUpdate();
+
+					if (found) {
+						try (BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
+							for (String[] student : studentData) {
+								bw.write(String.join(",", student));
+								bw.newLine();
+							}
+						} catch (IOException ee) {
+							JOptionPane.showMessageDialog(null, ee);
+						}
+
+						File oldFile = new File(csvFile);
+						File newFile = new File(tempFile);
+
+						oldFile.delete();
+						newFile.renameTo(oldFile);
+
 						JOptionPane.showMessageDialog(null, "Updated Successfully :)");
 						dispose();
 						Menu menu = new Menu();
 						menu.show();
+					} else {
+						JOptionPane.showMessageDialog(null, "Record not found");
 					}
-				}
-				catch(Exception ex) {
+				} catch (Exception ex) {
 					JOptionPane.showMessageDialog(null, ex);
 				}
 				
@@ -214,31 +256,38 @@ public class UpdateStudent extends JFrame {
 		btnNewButton.setForeground(Color.BLACK);
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
+
 				String str = updateEntry.getText();
-				
+				boolean recordFound = false;
+
 				try {
-					con = DriverManager.getConnection("jdbc:mysql://localhost/studentmanagementsystem", "root", "");
-					pst = con.prepareStatement("SELECT * FROM student where entrynumber = ?");
-					pst.setString(1, str);
-					rs = pst.executeQuery();
-					if(rs.next()==true) {
-						 String s = rs.getString(1);
-						 String s1 = rs.getString(2);
-						 String s2 = rs.getString(3);
-						 String s3 = rs.getString(4);
-						 String s4 = rs.getString(5);
-						
-						 nameU.setText(s);
-						 entryU.setText(s1);
-						 emailU.setText(s2);
-						 contactU.setText(s3);
-						 homeU.setText(s4);
+					String csvFile = "student.csv";
+					String line;
+					String csvSplitBy = ",";
+
+					try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+						while ((line = br.readLine()) != null) {
+							String[] student = line.split(csvSplitBy);
+
+							if (student[1].equalsIgnoreCase(str)) {
+								recordFound = true;
+								nameU.setText(student[0]);
+								entryU.setText(student[1]);
+								emailU.setText(student[2]);
+								contactU.setText(student[3]);
+								homeU.setText(student[4]);
+								break;
+							}
+						}
+					} catch (IOException ee) {
+						JOptionPane.showMessageDialog(null, ee);
 					}
-					
-				}
-				catch (SQLException e1) {
-					e1.printStackTrace();
+
+					if (!recordFound) {
+						JOptionPane.showMessageDialog(null, "Record not found");
+					}
+				} catch (Exception ex) {
+					JOptionPane.showMessageDialog(null, ex);
 				}
 				
 			}

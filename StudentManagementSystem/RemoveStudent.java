@@ -18,12 +18,15 @@ import javax.swing.JDesktopPane;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import java.awt.Color;
 import java.awt.event.ActionListener;
+import java.io.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RemoveStudent extends JFrame {
 
@@ -91,36 +94,66 @@ public class RemoveStudent extends JFrame {
 		JButton deleteData = new JButton("Delete");
 		deleteData.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
-				
-				
-				
+
+
+
+
 				try {
-					String query = "DELETE FROM `student` WHERE entrynumber=?";
-					con = DriverManager.getConnection("jdbc:mysql://localhost/studentmanagementsystem", "root", "");
-					pst=con.prepareStatement(query);
-					
+					String csvFile = "student.csv";
+					String tempFile = "temp_student.csv";
+					String line;
+					String csvSplitBy = ",";
+
 					String pid = deleteEntry.getText();
+					boolean found = false;
 
-					pst.setString(1, pid);
+					List<String[]> studentData = new ArrayList<>();
 
-					int k =	pst.executeUpdate();
-					
-					if(k==1) {
+					try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+						while ((line = br.readLine()) != null) {
+							String[] student = line.split(csvSplitBy);
+
+							if (student[1].equalsIgnoreCase(pid)) {
+								found = true;
+							} else {
+								studentData.add(student);
+							}
+						}
+					} catch (IOException ex) {
+						JOptionPane.showMessageDialog(null, ex);
+					}
+
+					if (found) {
+						try (BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
+							for (String[] student : studentData) {
+								bw.write(String.join(",", student));
+								bw.newLine();
+							}
+						} catch (IOException ee) {
+							JOptionPane.showMessageDialog(null, ee);
+						}
+
+						File oldFile = new File(csvFile);
+						File newFile = new File(tempFile);
+
+						oldFile.delete();
+						newFile.renameTo(oldFile);
+
 						JOptionPane.showMessageDialog(null, "Deleted Successfully :)");
 						dispose();
 						Menu menu = new Menu();
 						menu.show();
+					} else {
+						JOptionPane.showMessageDialog(null, "Record not found");
 					}
-	
-				}
-				catch(Exception ex) {
+				} catch (Exception ex) {
 					JOptionPane.showMessageDialog(null, ex);
 				}
-				
-				
-				
-				
+
+
+
+
+
 			}
 		});
 		deleteData.setForeground(Color.BLACK);
